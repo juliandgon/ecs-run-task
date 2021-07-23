@@ -38,6 +38,7 @@ type Runner struct {
 	Fargate            bool
 	SecurityGroups     []string
 	Subnets            []string
+	AssignPublicIp     bool
 	Environment        []string
 	Count              int64
 	Deregister         bool
@@ -83,7 +84,8 @@ func (r *Runner) Run(ctx context.Context) error {
 
 	svc := ecs.New(sess)
 
-	log.Printf("Registering a task for %s", *taskDefinitionInput.Family)
+	// log.Printf("Registering a task for %s", *taskDefinitionInput.Family)
+	log.Printf("Registering a task for %v", taskDefinitionInput.Family)
 	resp, err := svc.RegisterTaskDefinition(taskDefinitionInput)
 	if err != nil {
 		return err
@@ -119,11 +121,16 @@ func (r *Runner) Run(ctx context.Context) error {
 	if r.Fargate {
 		runTaskInput.LaunchType = aws.String("FARGATE")
 	}
+	sAssignPublicIp := "DISABLED"
+	if r.AssignPublicIp {
+		sAssignPublicIp="ENABLED"
+	}
+	
 	if len(r.Subnets) > 0 || len(r.SecurityGroups) > 0 {
 		runTaskInput.NetworkConfiguration = &ecs.NetworkConfiguration{
 			AwsvpcConfiguration: &ecs.AwsVpcConfiguration{
 				Subnets:        awsStrings(r.Subnets),
-				AssignPublicIp: aws.String("ENABLED"),
+				AssignPublicIp: aws.String(sAssignPublicIp),
 				SecurityGroups: awsStrings(r.SecurityGroups),
 			},
 		}
@@ -305,7 +312,12 @@ func writeContainerFinishedMessage(ctx context.Context, w *logWriter, task *ecs.
 		return fmt.Errorf("expected container to be STOPPED, got %s", *container.LastStatus)
 	}
 	if container.ExitCode == nil {
-		return errors.New(*container.Reason)
+		// return errors.New(*container.Reason)
+		if container.Reason != nil {
+			return errors.New(*container.Reason)
+		} else {
+			return errors.New(*task.StoppedReason)
+		}
 	}
 	return w.WriteString(ctx, fmt.Sprintf(
 		"Container %s exited with %d",

@@ -80,6 +80,10 @@ func main() {
 			Usage: "AWS Region",
 		},
 		&cli.BoolFlag{
+			Name:  "assign-public-ip",
+			Usage: "Assign Public Ip  (depends on subnet used). Default False",
+		},
+		&cli.BoolFlag{
 			Name:  "deregister",
 			Usage: "Deregister task definition once done",
 		},
@@ -107,6 +111,7 @@ func main() {
 		r.Environment = ctx.StringSlice("env")
 		r.Count = ctx.Int64("count")
 		r.Deregister = ctx.Bool("deregister")
+		r.AssignPublicIp = ctx.Bool("assign-public-ip")
 
 		if r.Region == "" {
 			r.Region = ctx.String("region")

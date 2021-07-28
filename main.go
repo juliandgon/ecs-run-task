@@ -84,6 +84,10 @@ func main() {
 			Usage: "Assign Public Ip  (depends on subnet used). Default False",
 		},
 		&cli.BoolFlag{
+			Name:  "enable-execute-command",
+			Usage: "Enable execute command for all tasks created (allowing remote command execution). Default False",
+		},
+		&cli.BoolFlag{
 			Name:  "deregister",
 			Usage: "Deregister task definition once done",
 		},
@@ -112,6 +116,7 @@ func main() {
 		r.Count = ctx.Int64("count")
 		r.Deregister = ctx.Bool("deregister")
 		r.AssignPublicIp = ctx.Bool("assign-public-ip")
+		r.EnableExecuteCommand = ctx.Bool("enable-execute-command")
 
 		if r.Region == "" {
 			r.Region = ctx.String("region")

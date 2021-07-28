@@ -39,6 +39,7 @@ type Runner struct {
 	SecurityGroups     []string
 	Subnets            []string
 	AssignPublicIp     bool
+	EnableExecuteCommand     bool
 	Environment        []string
 	Count              int64
 	Deregister         bool
@@ -110,10 +111,16 @@ func (r *Runner) Run(ctx context.Context) error {
 		log.Printf("Successfully deregistered task %s", taskDefinition)
 	}()
 
+	enableExecuteCommand := false
+	if r.EnableExecuteCommand {
+		enableExecuteCommand=true
+	}
+
 	runTaskInput := &ecs.RunTaskInput{
 		TaskDefinition: aws.String(taskDefinition),
 		Cluster:        aws.String(r.Cluster),
 		Count:          aws.Int64(r.Count),
+		EnableExecuteCommand:  aws.Bool(enableExecuteCommand),
 		Overrides: &ecs.TaskOverride{
 			ContainerOverrides: []*ecs.ContainerOverride{},
 		},
@@ -125,6 +132,7 @@ func (r *Runner) Run(ctx context.Context) error {
 	if r.AssignPublicIp {
 		sAssignPublicIp="ENABLED"
 	}
+
 	
 	if len(r.Subnets) > 0 || len(r.SecurityGroups) > 0 {
 		runTaskInput.NetworkConfiguration = &ecs.NetworkConfiguration{
